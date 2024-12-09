@@ -1,0 +1,45 @@
+name: Deploy Angular to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Change to 'main' if your default branch is 'main'
+
+permissions:
+  contents: write  # Required to push to the repository
+  pages: write     # Required to deploy to GitHub Pages
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'  # Specify the Node.js version
+
+    - name: Install dependencies
+      run: npm ci  # Use 'ci' for clean install
+
+    - name: Change base href for production
+      run: |
+        sed -i 's|<base href=".*" />|<base href="https://bohdankolodiy.github.io/money-fe/" />|' src/index.html
+
+    - name: Build the Angular app
+      run: npm run build -- --base-href="/sdk-finance-invoice/"  # Adjust base-href if necessary
+      env:
+        CI: true
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "bohdankolodiy"
+        git config --global user.email "b.kolodiy@binariks.com"
+
+    - name: Deploy to GitHub Pages
+      run: npm run deploy:ci
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub token for authentication
